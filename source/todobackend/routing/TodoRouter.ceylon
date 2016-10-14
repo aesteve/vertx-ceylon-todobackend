@@ -4,7 +4,8 @@ import io.vertx.ceylon.core.http {
     get,
     post,
     delete,
-    patch
+    patch,
+    HttpMethod
 }
 import io.vertx.ceylon.core { Vertx }
 import io.vertx.ceylon.web { router, RoutingContext }
@@ -19,13 +20,14 @@ import io.vertx.core.http {
 shared class TodoRouter(Vertx vertx) {
 
 	value router_ = router.router(vertx);
-	value writeMethods = [post, put, patch];
+	value usingBody = [post, put, patch];
+	value methods = usingBody.append([get, delete]);
+	value body = bodyHandler.create();
 	value cors = corsHandler.create("*")
 					.allowedHeader(HttpHeaders.contentType.string)
 					.allowedMethod(get)
 					.allowedMethod(delete);
-	writeMethods.fold(cors.allowedMethod);
-	value body = bodyHandler.create();
+	methods.fold(cors.allowedMethod);
 
 	shared Callable<Anything, [HttpServerRequest]> handler = router_.accept;
 
@@ -38,10 +40,13 @@ shared class TodoRouter(Vertx vertx) {
 		ctx.response().end("todo");
 	}
 
+	void attachBodyHandler(HttpMethod method) {
+		router_.route(method, "/todos/*").handler(body);
+	}
+
 	/* Generic json */
+	usingBody.fold(attachBodyHandler);
 	router_.route("/todos/*").handler(cors);
-	// writeMethods.fold(m => router_.route(m, "/todos/*").handler(body));
-	router_.route("/todos/*").handler(body);
 	router_.route("/todos/*").handler(addContentType);
 	router_.route("/todos/*").last().handler(sendPayload);
 
