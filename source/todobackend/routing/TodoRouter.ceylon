@@ -16,7 +16,7 @@ import io.vertx.core.http {
     HttpHeaders
 }
 
-class TodoRouter(Vertx vertx) {
+shared class TodoRouter(Vertx vertx) {
 
 	value router_ = router.router(vertx);
 	value writeMethods = [post, put, patch];
